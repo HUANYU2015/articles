@@ -51,10 +51,11 @@ public class MyDateConverter implements Converter<String, Date> {
 ### 过程二：取（Date - > String）
 > 前端代码中添加的Date日期formatter方法可以将形如*Wed Aug 29 22:52:25 CST 2018*的日期值格式化为指定样式的字符串，而从数据库中取出的jdbc类型为Date（或TIMESTAMP）（由java类型为Date的日期对象存入）对象的值也形如*2018-08-29T22:53:27.192+0800*，并且该对象还有两个属性，其一为fastTime，为long类型毫秒数，其二为cdate，值类型与Date对象的类似，具体见下图。
 而前端接收的不是Date类型对象，而是其属性fastTime，从而formatter方法无法格式化fastTime，导致异常出现。为解决此问题，比较简单的方法是在model类的Date类型数据域及getter上添加注释，注释代码如下
-![image_1](https://github.com/HUANYU2015/NOTE/blob/master/image.png)
+![image_1](https://github.com/HUANYU2015/articles/blob/master/image.png)
 
 ~~~java
 @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+08:00")
 ~~~
 
-![image_2](https://github.com/HUANYU2015/NOTE/blob/master/2018-12-26.png)
+![image_2](https://github.com/HUANYU2015/articles/blob/master/2018-12-26.png)
+![image_3](https://github.com/HUANYU2015/articles/blob/master/屏幕快照2018-12-26.png)
