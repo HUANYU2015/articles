@@ -1,8 +1,8 @@
-## POI创建复杂表头excel文件通用方法
+# POI创建复杂表头excel文件通用方法
+
 ---
 
-
-### 主要实现的功能：
+## 主要实现的功能：
 
 - 泛型方法，不依赖对象类型
 - 表头信息使用反射从model类及数据域注释获取
@@ -30,7 +30,7 @@ public @interface ExcelAnnotation {
     /*列注释属性*/
     // 表头cell名称
     String headerName() default "";
-    
+
     // 表头cell索引
     int index() default 0;
 
@@ -39,7 +39,6 @@ public @interface ExcelAnnotation {
 
     // 表头cell的上级cell索引
     int parentIndex() default -1;
-
 
     /*类注释属性*/
     // sheet名称
@@ -54,13 +53,12 @@ public @interface ExcelAnnotation {
 ~~~
 
 > 对于列注释index()，表头cell索引设定所遵循的原则是：索引从*0*开始，依据表头在页面中的展布位置，从左往右，从上往下，从父cell到子cell升序排列，即就是靠左的cell索引小于靠右cell的索引，父cell的索引小于其子cell的索引，靠左的子cell的索引小于靠右的父cell的索引。具体见下表所示:
-> ![IMAGE](quiver-image-url/93FD0290AD2EF91D7CFDE10DBA4BC755.jpg =980x274)
+![IMAGE](https://github.com/HUANYU2015/articles/blob/master/image.png)
 
 2. model类
 
 ~~~java
 import com.longruan.hnny.scheduling.annotation.ExcelAnnotation;
-
 import java.io.Serializable;
 import java.util.Date;
 
@@ -127,7 +125,7 @@ public class ExtractionStandardFootage implements Serializable {
     private Integer sysdeptId;
 
     private static final long serialVersionUID = 1L;
-    
+
     // 后续构造器及setter和getter省略
 }
 ~~~
@@ -772,7 +770,7 @@ public class ExcelUtil {
 public class ExtractionStandardFootageServiceImpl implements ExtractionStandardFootageService {
     @Autowired
     private ExtractionStandardFootageMapper extractionStandardFootageMapper;
-    
+
     @Override
     public void export(HttpServletRequest request, HttpServletResponse response, String fileName, String tableName, List<ExtractionStandardFootage> dataSource) {
         OutputStream outputStream = null;
@@ -805,10 +803,9 @@ public class ExtractionStandardFootageServiceImpl implements ExtractionStandardF
 }
 ~~~
 
+---
 
--------
-
-#### 另附数据库建表代码
+### 另附数据库建表代码
 
 ~~~sql
 -- auto-generated definition
@@ -889,5 +886,3 @@ COMMENT ON COLUMN EXTRACTION_STANDARD_FOOTAGE.UPDATE_TIME IS '记录更新时间
 COMMENT ON COLUMN EXTRACTION_STANDARD_FOOTAGE.SYSDEPT_ID IS '所属部门id'
 /
 ~~~
-
-
