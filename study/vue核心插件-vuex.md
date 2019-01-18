@@ -20,7 +20,7 @@
 - 直接修改package.json
 - 使用下面的命令声明
 
-~~~ shell
+~~~ bash
 npm install vuex --save
 ~~~
 
@@ -37,6 +37,8 @@ Vue.use(Vuex)
 第二行是vue本身的插件注入语法，将插件注入vue的目的是方便我们在组件内部调用它。
 
 ## 介绍
+
+检查
 
 ### vuex是什么？
 
@@ -130,6 +132,19 @@ const app = new Vue ({
     template: '<div class="app"><counter></counter></div>'
 })
 ~~~
+
+ 车市
+ - one
+ - ceshi
+ - jiance
+
+1. one
+   1. ji
+   2. ceshi **jiance**
+   3. ceshi `import`
+2. two
+
+
 
 > 注意：一般是在创建`Store`(export default new Vuex.Store)的js文件中引入(import)`Vuex`，并且使用`Vue.use(Vuex)`，然后在程序入口文件(main.js)中引入(import)`store`文件，并在应用根实例中利用store选项添加，如上面的代码。
 
@@ -795,3 +810,5 @@ store.state.b // -> moduleB 的状态
 ## 测试
 
 ## 热重载
+
+## localStorage
