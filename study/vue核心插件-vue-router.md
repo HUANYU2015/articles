@@ -166,15 +166,352 @@ this.$route.params.pathMatch // '/non-existing'
 ### 嵌套路由
 
 <!-- [测试](#进阶) -->
+实际应用界面，通常由多层嵌套的组件组合而成。同样，URL中各段动态路径也按某种结构对应嵌套的各层组件，如：
 
+~~~ javascript
+/user/foo/profile                     /user/foo/posts
++------------------+                  +-----------------+
+| User             |                  | User            |
+| +--------------+ |                  | +-------------+ |
+| | Profile      | |  +------------>  | | Posts       | |
+| |              | |                  | |             | |
+| +--------------+ |                  | +-------------+ |
++------------------+                  +-----------------+
+~~~
+
+借助 `vue-router` ，使用嵌套路由配置，就可以很简单地表达这种关系。
+
+接着上节创建的app:
+
+~~~ html
+<div id="app">
+  <router-view></router-view>
+</div>
+~~~
+
+~~~ javascript
+const User = {
+    template: '<div>User {{$route.params.id}}</div>'
+}
+
+const router = new VueRouter({
+    routers: [
+        {path: '/user/:id', component: User}
+    ]
+})
+~~~
+
+这里的 `<router-view>` 是最顶层的出口，渲染最高级路由匹配到的组件。同样的，一个被渲染的组件也可以包含自己的嵌套 `<router-view>` 。例如，在 `User` 组件的模板中添加一个 `<router-view>` ：
+
+~~~ javascript
+const User = {
+    template: '
+        <div class="user">
+            <h2>User {{$route.params.id}}</h2>
+            <router-view></router-view>
+        </div>
+    '
+}
+~~~
+
+要在嵌套的出口中渲染组件，需要在 `VueRouter` 的参数中使用 `children` 配置：
+
+~~~ javascript
+const router = new VueRouter({
+    router: [
+        {
+            path: '/user/:id', component: User,
+            children: [
+                {
+                    // 当 /user/:id/profile匹配成功
+                    // UserProfile会被渲染在User的<router-view>中
+                    path: 'profile',
+                    component: UserProfile
+                }, {
+                    // 当/user/:id/posts匹配成功
+                    // UserPosts会被渲染在User的<router-view>中
+                    path: 'posts',
+                    component: UserPosts
+                }
+            ]
+        }
+    ]
+})
+~~~
+
+> 注意：以 `/` 开头的嵌套路径会被当做**根路径**。这让你充分地使用嵌套组件，而无须设置嵌套路径。
+
+`children` 配置就像 `routers` 配置一样的路径配置参数，所以可以嵌套多层路由。
+
+此时，基于上面的配置，当访问 `/user/foo` 时，User的出口是不会渲染任何东西的，因为没有匹配到合适的子路由。如果想要渲染点什么，可以提供一个空的子路由：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {
+            path: '/user/:id', component: User,
+            children: [
+                // 当 /user/:id 匹配成功，
+                // UserHome 会被渲染在 User 的<router-view>中
+                {path: '', component: UserHome}
+
+                // ...其他子路由
+            ]
+        }
+    ]
+})
+~~~
+
+提供以上案例的可运行代码请[**移步这里**](https://jsfiddle.net/yyx990803/L7hscd8h/)。
 
 ### 编程式导航
 
+除了使用 `<router-link>` 创建a标签来定义导航链接，还可以借助router的实例方法，通过编写代码来实现。
+
+#### router.push(location, onComplete?, onAbort?)
+
+> 注意：在Vue实例内部，可以通过 `$router` 访问路由实例。因此你可以调用 `this.$router.push` 。
+
+想要导航到不同的URL，则使用 `router.push` 方法。这个方法会向history栈添加一个新的记录📝。所以，当用户点击浏览器后退按钮时，则回到之前的URL。
+
+当你点击 `<router-link>` 时，这个方法会在内部调用，故点击 `<router-link :to="...">` 等同与调用 `router.push(...)` 。
+
+|**声明式**|**编程式**|
+|:--------|:--------|
+| `<router-link :to="...">` | `router.push(...)` |
+
+该方法的参数可以是一个字符串路径，或者一个描述地址的对象。例如：
+
+~~~ javascript
+// 字符串 -> /home
+router.push('home')
+
+// 对象 -> /home
+router.push({path: 'home'})
+
+// 命名的路由 -> /user/123
+router.push({name: 'user', params: {userId: '123'}})
+
+// 带查询参数， -> /register?plan=private
+router.push({path: 'register', query: {plan: 'private'}})
+~~~
+
+> 注意：如果提供了 **`path`**，**`params`** 会被忽略（上述例子中的 `query` 不属于这种情况）。此外，还有以下一些方式作为替代：
+
+~~~ javascript
+const userId = '123'
+router.push({name: 'user', params: {userId}}) // -> /user/123
+router.push({path: '/user/${userId}'}) // -> /user/123
+
+// 这里的 params 不生效
+router.push({path: '/user', params: {userId}}) // -> /user
+~~~
+
+同样的规则也适用于 `router-link` 组件的 `to` 属性。
+
+在2.2.0+，函数 `router.push` 和 `router.replace` 中，提供的 `onComplete` 和 `onAbort` 回调作为第二、第三个参数。前者将会在导航成功完成时（在所有的异步钩子被解析之后）进行相应的调用，后者在导航成功终止时（导航到相同的路由、或在当前导航完成之前导航到另一个不同的路由）进行相应的调用。
+
+#### router.replace(location, onComplete?, onAbort?)
+
+跟 `router.push` 很像，位移的不同就是，它不会像history提价新纪录，而是替换掉当前的history记录。
+
+|**声明式**|**编程式**|
+|:--------|:--------|
+| `<router-link :to="..." replace>` | `router.replace(...)` |
+
+#### router.go(n)
+
+这个方法的参数是一个整数，作用是在history记录中向前后向后移动n步，类似 `window.histroy.go(n)` 。
+
+~~~ javascript
+// 在浏览器记录中前进一步，等同于history.forword()
+router.go(1)
+
+// 后退一步记录，等同于history.back()
+router.go(-1)
+
+// 前进 3 步记录
+router.go(3)
+
+// 如果history记录不够用，就默默地失败
+router.go(-100)
+router.go(100)
+~~~
+
+#### 操作History
+
+注意 `router.push` `router.replace` 和 `router.go` 与`window.histroy.pushState` `window.history.replaceState` 和  `window.history.go` 比较相像，实际上它们确实四效仿 `window.history` **API**的。
+
+此外，Vue Router 的导航方法（push/replace/go）在各类路由模式（`history` `hash`和`abstact`）下表现一致。
+
 ### 命名路由
+
+有时候，通过一个名称来识别一个路由显得更方便一些，特别是在链接一个路由，或者执行一些跳转的时候。可以在创建Router实例的时候，在 routers 配置中给某个路由设置名称。
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {
+            path: '/user/:userId',
+            name: 'user',
+            component: User
+        }
+    ]
+})
+~~~
+
+要链接一个命名路由，可以给 `router-link` 的 `to` 属性传一个对象，该对象包含一个 name 属性：
+
+~~~ javascript
+// -> /user/123
+<router-link :to="{name: 'user', params: {userId: 123}}">User</router-link>
+~~~
+
+也可以使用代码实现：
+
+~~~ javascript
+router.push({name: 'user', params: {userId: 123}})
+~~~
+
+这两种方式都会把路由导航到 `/user/123` 路径。
+
+完整例子请[**移步这里**](https://github.com/vuejs/vue-router/blob/dev/examples/named-routes/app.js)。
 
 ### 命名视图
 
+有时候需要同时（同级）展示多个视图，而不是嵌套显示，例如创建一个页面，其布局有 sidebar （侧导航）和 main （主内容）两个视图，这个时候命名视图（添加 `name` 属性）就派上用场了。你可以在界面中拥有多个单独命名的视图，而不是单独一个出口。默认（`default`）视图（router-view），可无需设置name属性。代码如下：
+
+~~~ html
+<router-view class="view one"></router-view>
+<router-view class="view two" name="a"></router-view>
+<router-view class="view three" name="b"></router-view>
+~~~
+
+单个视图使用单个组件渲染，因此对于`同一个路由`，多个视图就需要多个组件。确保正确使用 `components` 配置（复数）
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {
+            path: '/',
+            components: {
+                default: Foo,
+                a: Bar,
+                b: Baz
+            }
+        }
+    ]
+})
+~~~
+
+以上案例相关可运行代码请[**移步这里**](https://jsfiddle.net/posva/6du90epg/)
+
+#### 嵌套命名视图
+
+当页面布局比较复杂时，可能需要使用命名视图创建视图嵌套。需要结合嵌套路由和命名视图来实现。以一个设置面板为例：
+
+~~~ javascript
+/settings/emails                                       /settings/profile
++-----------------------------------+                  +------------------------------+
+| UserSettings                      |                  | UserSettings                 |
+| +-----+-------------------------+ |                  | +-----+--------------------+ |
+| | Nav | UserEmailsSubscriptions | |  +------------>  | | Nav | UserProfile        | |
+| |     +-------------------------+ |                  | |     +--------------------+ |
+| |     |                         | |                  | |     | UserProfilePreview | |
+| +-----+-------------------------+ |                  | +-----+--------------------+ |
++-----------------------------------+                  +------------------------------+
+~~~
+
+`Nav` 只是一个常规组件。
+`UserSettings` 是一个视图组件。
+`UserEmailSubscriptions`、`UserProfile`、`UserProfilePreview` 是嵌套的视图组件。
+
+`UserSettings` 组件代码如下：
+
+~~~ javascript
+const UserSettings = {
+    template: `
+    <div class="us">
+        <h2>User Settings</h2>
+        <UserSettingsNav/>
+        <router-view class ="us__content"/>
+        <router-view name="helper" class="us__content us__content--helper"/>
+</div>
+    `,
+  components: { UserSettingsNav }
+}
+~~~
+
+然后通过路由配置完成布局：
+
+~~~ javascript
+const router = new VueRouter({
+    mode: 'history',
+    routers: [
+        {
+            path: '/settings',
+            component: UserSettings,
+            children: [{
+                path: 'emails',
+                component: UserEmailSubscriptions
+            }, {
+                path: 'profile',
+                components: {
+                    default: UserProfile,
+                    helper: UserProfilePreview
+                }
+            }]
+        }
+    ]
+})
+~~~
+
+一个完整的示例请[**移步这里**](https://jsfiddle.net/posva/22wgksa3/)
+
 ### 重定向和别名
+
+#### 重定向
+
+重定向也是通过 `routers` 配置来完成的，下面的例子是从 `/a` 重定向到 `/b` ：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {path: '/a', redirect: '/b'}
+    ]
+})
+~~~
+
+重定向的目标也可以是一个命名的路由：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {path: '/a', redirect: {name: 'foo'}}
+    ]
+})
+~~~
+
+甚至是一个方法，该方法返回重定向目标：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {path: '/a', redirect: to => {
+            // 方法接收 目标路由 作为参数
+            // return 重定向的 字符串路径或路径对象
+        }}
+    ]
+})
+~~~
+
+> 注意[导航守卫](#导航守卫)并没有应用在跳转路由上，而仅仅应用在其目标上。在下面这个例子中，为 /a 路由添加一个 beforeEach 或 beforeLeave 守卫并不会有任何效果。
+>
+> 其它高级用法，请参考[**例子**](https://github.com/vuejs/vue-router/blob/dev/examples/redirect/app.js)。
+
+#### 别名
+
+TODO 待续
 
 ### 路由组件传参
 
