@@ -4,13 +4,17 @@
 
 ### 直接下载/CDN
 
-### NPM
+### NPM 
 
 使用下面的命令或是使用vue-cli自动安装
 
 ~~~ xml
 npm install vue-router
 ~~~
+
+$检测测试简答支持合适检测终于简要必须知道输出加载$
+~~检测~~
+
 
 如果在一个模块化工程中使用它，必须要通过Vue.use()明确地安装路由功能：
 
@@ -28,7 +32,7 @@ Vue.use(VueRouter)
 git clone https://github.com/vuejs/vue-router.git node_modules/vue-router
 cd node_modules/vue-router
 npm install
-npm run build
+ run build
 ~~~
 
 ## 介绍
@@ -90,10 +94,10 @@ Vue Router是Vue.js官方的路由管理器。它和Vue.js的核心深度集成�
  ```
 
 你可以在一个路由中设置多段 **路径参数**，对应的值都会设置到 `$route.params` 中。例如：
-|模式|匹配路径|$route.params|
-|:------|:------|:------|
-|/user/:username|/user/evan| `{username: ‘evan’}` |
-|/user/:username/post/:post_id|/user/evan/post/123| `{username: 'evan', post_id: '123'}` |
+| 模式                          | 匹配路径            | $route.params                        |
+| :---------------------------- | :------------------ | :----------------------------------- |
+| /user/:username               | /user/evan          | `{username: ‘evan’}`               |
+| /user/:username/post/:post_id | /user/evan/post/123 | `{username: 'evan', post_id: '123'}` |
 
 除了 `$route.params` 外， `$route` 对象还提供了其他有用的信息，如 `$route.query` (如果URL中有查询参数)、 `$route.hash` 等等。
 
@@ -276,8 +280,8 @@ const router = new VueRouter({
 
 当你点击 `<router-link>` 时，这个方法会在内部调用，故点击 `<router-link :to="...">` 等同与调用 `router.push(...)` 。
 
-|**声明式**|**编程式**|
-|:--------|:--------|
+| **声明式**                | **编程式**         |
+| :------------------------ | :----------------- |
 | `<router-link :to="...">` | `router.push(...)` |
 
 该方法的参数可以是一个字符串路径，或者一个描述地址的对象。例如：
@@ -315,8 +319,8 @@ router.push({path: '/user', params: {userId}}) // -> /user
 
 跟 `router.push` 很像，位移的不同就是，它不会像history提价新纪录，而是替换掉当前的history记录。
 
-|**声明式**|**编程式**|
-|:--------|:--------|
+| **声明式**                        | **编程式**            |
+| :-------------------------------- | :-------------------- |
 | `<router-link :to="..." replace>` | `router.replace(...)` |
 
 #### router.go(n)
@@ -511,11 +515,227 @@ const router = new VueRouter({
 
 #### 别名
 
-TODO 待续
+“重定向”即，当用户访问 `/a` 时，URL将会被替换成 `/b` ，然后匹配路由为 `/b` 。
+而别名的路由匹配则保持不变。例如，**`/a` 的别名是 `/b` ，意味着，当用户访问 `/b` 时，URL会保持为 `/b` ，但是路由匹配则为 `/a` ，就像用户访问 `/a` 一样**。
+
+上面对应的路由配置为：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {path: '/a', component: A, alias: '/b'}
+    ]
+})
+~~~
+
+借助“别名”，你可以不必受限于配置的嵌套路由结构，而自由地将UI结构映射到任意的URL。
+更多高级用法，请[移步例子](https://github.com/vuejs/vue-router/blob/dev/examples/route-alias/app.js)
 
 ### 路由组件传参
 
+在组件中，使用 `$route` 会使该组件与其对应的路由形成高度耦合，从而使组件只能在某些特定的URL上使用，限制了组件的灵活使用。
+
+为了解决这个问题，可以使用 `props` 将组件和路由解耦：
+
+**与 `$route` 耦合**
+
+~~~ javascript
+const User = {
+    template: '<div>User {{$route.params.id}}</div>'
+}
+const router = new VueRouter({
+    routers: [
+        {path: '/user/:id', component: User}
+    ]
+})
+~~~
+
+**通过 `props` 解耦**
+
+~~~ javascript
+const User = {
+    props: ['id'],
+    template: '<div>User {{id}}</div>'
+}
+
+const router = new VueRouter({
+    routers: [
+        {path: '/user/:id', component: User, props: true},
+
+        // 对于包含命名视图的路由，你必须分别为每个命名视图设置 ‘props’选项：
+        {
+            path: '/user/:id',
+            components: {default: User, sidebar: Sidebar},
+            props: {default: true, sidebar: false}
+        }
+    ]
+})
+~~~
+
+这样你便可以在任何地方使用该组件，使得该组件更易于重用和测试。
+
+#### 布尔模式
+
+如果 `props` 被设置为 `true` ，`route.params` 将会被设置为组件属性。
+
+#### 对象模式
+
+如果 `props` 是一个对象，它会按原样设置为组件属性。当 `props`是静态（字符串）的时候有用。
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {path: '/promotion/from-newletter', component: Promotion, props: {newletterPopup: false}}
+    ]
+})
+~~~
+
+#### 函数模式
+
+可以创建一个函数，该函数返回 `props` 。从而便可以将参数转换成另一种类型，比如可以将金泰值与基于路由的参数结合等等。
+
+~~~ javascript
+const router = new VueRouter({
+    router: [
+        {
+            path: '/search', component: SearchUser, props: (route) => ({query: route.query.q})
+        }
+    ]
+})
+~~~
+
+URL `/search?q=vue` 会将 `{query: 'vue'}` 作为属性传递给 `SearchUser` 组件。
+
+> 注意: 请尽可能保持 `props` 函数为[**无状态**][3]的，因为它只会在路由发生变化时起作用。如果你需要状态来定义 `props` ，请使用**包装组件**，这样Vue才可以对状态变化作出反应。
+
+详细用法，请查看[例子]或下面代码(https://github.com/vuejs/vue-router/blob/dev/examples/route-props/app.js)
+
+~~~ javascript
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+import Hello from './Hello.vue'
+
+Vue.use(VueRouter)
+
+function dynamicPropsFn (route) {
+  const now = new Date()
+  return {
+    name: (now.getFullYear() + parseInt(route.params.years)) + '!'
+  }
+}
+
+const router = new VueRouter({
+  mode: 'history',
+  base: __dirname,
+  routes: [
+    { path: '/', component: Hello }, // No props, no nothing
+    { path: '/hello/:name', component: Hello, props: true }, // Pass route.params to props
+    { path: '/static', component: Hello, props: { name: 'world' }}, // static values
+    { path: '/dynamic/:years', component: Hello, props: dynamicPropsFn }, // custom logic for mapping between route and props
+    { path: '/attrs', component: Hello, props: { name: 'attrs' }}
+  ]
+})
+
+new Vue({
+  router,
+  template: `
+    <div id="app">
+      <h1>Route props</h1>
+      <ul>
+        <li><router-link to="/">/</router-link></li>
+        <li><router-link to="/hello/you">/hello/you</router-link></li>
+        <li><router-link to="/static">/static</router-link></li>
+        <li><router-link to="/dynamic/1">/dynamic/1</router-link></li>
+        <li><router-link to="/attrs">/attrs</router-link></li>
+      </ul>
+      <router-view class="view" foo="123"></router-view>
+    </div>
+  `
+}).$mount('#app')
+~~~
+
 ### HTML History模式
+
+ 参考:</br>
+[一](https://juejin.im/post/5a61908c6fb9a01c9064f20a)</br>
+[二](https://juejin.im/post/5b31a4f76fb9a00e90018cee)</br>
+[三](https://www.jianshu.com/p/3fcae6a4968f)
+
+#### 为什么要有hash 和 history
+
+对于Vue这类渐进式前端开大框架，为了构建SPA（单页面应用），需要引入**前端路由系统**，这也是Vue_router存在的意义。前端路由的核心，就在于--**改变视图的同时不会向后端发出请求**。
+
+为了达到这一目的，当前浏览器提供了一下两种支持：
+
+1. **`hash`**--即地址栏URL中的 `#` 符号（此hash不是密码学里的散列运算)。</br>比如这个URL: `http://www.abc.com/#/hello` ，hash的值为 `#/hello` 。它的特点在于：hash虽然出现在URL中，但不会被包括在HTTP请求中，对后端完全没有影响，因此**改变hash不会重新加载页面**。
+2. **`history`**--利用了HTML5 History Interface 中新增的 `pushState()` 和 `replaceState()` 方法（需特定浏览器支持）。</br>这两个方法应用于浏览器的历史记录栈，在当前已有的 `back`、 `forward`、`go` 的基础之上，它们提供了对历史记录进行修改的功能。只是当它们执行修改时，虽然当前URL被改变了，但是浏览器不会立即向后端发送请求。
+
+因此可以说，hash模式和history模式都属于浏览器自身的属性，Vue-Router只是利用了这两个特性来实现前端路由（通过调用浏览器提供的接口）。
+
+#### hash模式
+
+hash模式背后的原理是 `onhashchange` 事件，可以在window对象上监听这个事件：
+
+~~~ javascript
+window.onhashchange = function(event) {
+    console.log(event.oldURL, event.newURL);
+    let hash = location.hash.slice(1);
+    document.body.style.color = hash;
+}
+~~~
+
+上面的diamante可以实现通过改变hash来改变页面字体颜色的功能，可以在一定程度上说明hash的原理。
+
+更关键的一点是，因为hash发生变化的URL都会被浏览器记录下来，从而浏览器的前进后退都可以使用了。同时点击后退时，页面字体颜色也会发生变化。这样一来，尽管浏览器没有请求服务器，页面颜色也会发生变化，但是页面状态和URL一一关联起来了。
+
+#### history模式应用场景
+
+一般场景下，hash 和 history 都可以，除非你更在意颜值，`#` 符号夹杂在URL里看起来确实不太美观。
+
+另外，根据 [Mozilla Develop Network][4]的介绍，调用 `history.pushState()` 相比于直接修改 `hash` ，存在以下优势：
+
+- `pushState()` 设置的新URL可以使与当前URL**同源**的任意URL；而 `hash` 只可修改 `#` 后面的部分，因此只能设置与当前URL**同文档**的URL；
+- `pushState()` 设置新的URL可以与当前URL一模一样，这样也会把记录添加到栈中；而 `hash` 设置的新值必须与原来不一样才会触发动作将记录添加到栈中；
+- `pushState()` 通过 `stateObject` 参数可以添加任意类型的数据到记录中；而 `hash` 只可添加端字符串；
+- `pushState()` 可额外设置 `title`属性供后续使用。
+
+当然，`history` 模式也不是没有缺陷。SPA虽然在浏览器中游刃有余，但是当真要通过URL向后端发起HTTP请求时，两者的差异就表现出来了。尤其在用户手动输入URL后回车，或者刷新（重启）浏览器的时候。
+
+1. `hash` 模式下，仅 `hash` 符号之前的内容会被包含在请求中，如 `http://www.abc.com` ，因此对于后端来说，即使没有做到对路由的全覆盖，也不会返回404错误。
+2. `history` 模式下，前端的URL必须和实际向后端发起请求的URL一致，如 `http://www.abc.com/book/id`。如果后端缺少对 `/book/id` 的路由处理，将返回404错误。
+
+因此，Vue-Router官网里如此描述：“**不过这种模式要玩好，还需要后台配置支持**......所以你要在服务端增加一个覆盖所有情况的候选资源：如果URL匹配不到任何静态资源，则应该返回同一个index.html页面，这个页面就是你APP依赖的页面。”
+
+#### 后端配置例子
+
+// todo 待续！*****待续*****
+
+$nginx$
+
+$原生Node.js$
+
+$基于Node.js的Express$
+
+$InternetInformation Services（IIS）$
+
+$Caddy$
+
+$Firebase主机$
+
+#### 警告⚠️
+
+给个警告，因为这么做以后，服务器就不再返回 404 错误页面，因为对于所有路径都会返回 index.html 文件。为了避免这种情况，你应该在 Vue 应用里面覆盖所有的路由情况，然后在给出一个 404 页面。具体代码如下：
+
+~~~ javascript
+const router = new VueRouter({
+    mode: 'history',
+    routers: [
+        {path: '*', component: NotFoundComponent}
+    ]
+})
+~~~
+
+或者，如果你使用 Node.js 服务器，你可以用服务端路由匹配到来的 URL，并在没有匹配到路由的时候返回 404，以实现回退。更多详情请查阅 [Vue 服务端渲染文档][5]。
 
 ## 进阶
 
@@ -589,5 +809,8 @@ scrollBehavior (to, from, savedPosition) {
 
 [1]:https://segmentfault.com/a/1190000012578301
 [2]:https://github.com/vuejs/vue-router/blob/next/examples/scroll-behavior/app.js
+[3]:https://endual.iteye.com/blog/1340359
+[4]:https://developer.mozilla.org/zh-CN/docs/Web
+[5]:https://ssr.vuejs.org/zh/
 
 ### 路由懒加载
