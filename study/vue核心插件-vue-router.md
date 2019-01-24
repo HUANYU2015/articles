@@ -1,4 +1,4 @@
-# [vue-router](https://router.vuejs.org/zh/guide/advanced/scroll-behavior.html#%E5%BC%82%E6%AD%A5%E6%BB%9A%E5%8A%A8)
+# vue-router
 
 ## 安装
 
@@ -608,7 +608,7 @@ URL `/search?q=vue` 会将 `{query: 'vue'}` 作为属性传递给 `SearchUser` �
 
 > 注意: 请尽可能保持 `props` 函数为[**无状态**][3]的，因为它只会在路由发生变化时起作用。如果你需要状态来定义 `props` ，请使用**包装组件**，这样Vue才可以对状态变化作出反应。
 
-详细用法，请查看[例子]或下面代码(https://github.com/vuejs/vue-router/blob/dev/examples/route-props/app.js)
+详细用法，请查看[例子](https://github.com/vuejs/vue-router/blob/dev/examples/route-props/app.js)或下面代码
 
 ~~~ javascript
 import Vue from 'vue'
@@ -741,11 +741,93 @@ const router = new VueRouter({
 
 ### 导航守卫
 
+TODO 待续！
+
 ### 路由元信息
+
+vue-router路由元信息简单说，就是通过meta对象中的一些属性设定来判断当前路由是否需要进行相关处理。
+
+在路由列表中，我们可以给每个路由记录配置一个数据字段，一般叫做 `meta`，我么可以设置一些自定义信息，供页面组件或者路由钩子函数使用。例如，我们在浏览一些网站的时候，有时会验证用户是否登录，但并不是所有情况都需要验证的，所以，我们就可以通过在路由记录中添加路由元数据来进行区分。
+
+定义路由的时候可以配置 `meta` 字段：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {
+            path: '/foo',
+            component: Foo,
+            children: [
+                {
+                    path: '/bar',
+                    component: Bar,
+                    // a meta filed
+                    meta: {requiresAuth: true}
+                }
+            ]
+        }
+    ]
+})
+~~~
+
+那么如何访问这个 `meta` 字段呢？
+
+首先，我们称呼 `router` 配置中的每个路由对象为**路由记录**。路由记录是可以嵌套的，因此，当一个路由匹配成功后，它可能匹配多个路由记录。
+
+例如，更具上面的路由配置，`/foo/bar` 这个URL将会匹配父路由记录和子路由记录。
+
+一个路由匹配到的所有路由记录都会暴露为由 `$route` 对象（还有在导航守卫中的路由对象）组成的 `$route.matched` 数组。因此，我们需要遍历该数组来检查路由记录中的 `meta` 字段，在里了我们使用 `some()` 函数来遍历数组，并用到了导航守卫的全局守卫中的`beforeEach` 方法。
+
+~~~ javascript
+// 在路由更新之前去遍历路由记录的meta元信息，判断是否存在requiresAuth属性
+router.beforeEach((to, from, next) => {
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+        // 如果存在 requiresAuth 属性，则据需判断是否 logged in，
+        // 如果为否，则重定向到登录页面，/login?redirect=to.fillPath
+        if (!auth.loggedIn()) {
+            next({
+                path: '/login',
+                query: {redirect: to.fullPath}
+            })
+        } else {
+            next()
+        }
+    } else {
+        // 确保一定要在此处调用 next()方法
+        next()
+    }
+})
+~~~
+
+$解析：$
+
+- meta字段就是路由元信息字段，requiresAuth是任意取的字段名称，用来标记这个路由信息是否需要检测，true 表示需要检测；
+- `if (to.matched.some(record => record.meta.requiresAuth))`，使用了ES6的箭头函数语法，`to.matched`即为$route对象数组，单个路由对象我们定义为 `record` ，并检测这个路由对象（记录）是否拥有 `meta` 选项，如果有，再检测该选项是否拥有 `requiresAuth`这个属性，并且是否为 `true`，如果满足以上条件，就确定了该 `/foo/bar` 路由；
+  - function (i) {return i + 1;} // ES5
+  - (i) => i + 1 // ES6
+- `if (!auth.loggedIn())`，通过自己封装的检验方法 `auth.loggedIn()`，检验用户是否登录，从而决定渲染下一步操作；
+- Array some()方法
+  - some() 方法用于检测数组中的元素是否满足指定条件（函数提供）；
+  - some() 方法会依次执行数组的每个元素，如果有一个元素满足条件，则表达式返回true，剩余的元素不会再执行检测，如果没有满足条件的元素，则返回false；
+  - some() 不会对空数组进行检测，且不会改变原始数组；
+  - 语法：array.some(function(currentValue,index,arr),thisValue)
+  - 参数说明：
+    - currentValue：必选，当前元素的值；
+    - index：可选，当前元素的索引值；
+    - arr：可选，当前元素属于的数组对象；
+    - thisValue：可选。对象作为该执行回调时使用，传递给函数，用作 "this" 的值。如果省略了 thisValue ，"this" 的值为 "undefined"。
+  - 返回值：布尔值。如果数组中有元素满足条件返回 true，否则返回 false。
+
+#### 应用场景
+
+- 在页面跳转之前（使用到beforEach()方法）改变页面标题（title）或者检查用户是否已登录（一般在用户注册、完善用户信息及重置密码等活动后向相关页面跳转时，需要检测），详细信息请查看[这里][6]和[这里][7]；
+- 在页面跳转之后用于实现返回到页面之前浏览过的区域或者让页面返回到顶部功能（需要借助afterEach()方法），代码见[这里][8]。
 
 ### 过度动效
 
 ### 数据获取
+
+TODO 待续！
 
 ### 滚动行为
 
@@ -807,10 +889,15 @@ scrollBehavior (to, from, savedPosition) {
 
 我们还可以利用[路由元信息][1]更细颗粒度地控制滚动。查看完整例子请[移步这里][2]。
 
+### 路由懒加载
+
+TODO 待续！见[7]
+
 [1]:https://segmentfault.com/a/1190000012578301
 [2]:https://github.com/vuejs/vue-router/blob/next/examples/scroll-behavior/app.js
 [3]:https://endual.iteye.com/blog/1340359
 [4]:https://developer.mozilla.org/zh-CN/docs/Web
 [5]:https://ssr.vuejs.org/zh/
-
-### 路由懒加载
+[6]:http://www.hangge.com/blog/cache/detail_2130.html
+[7]:https://juejin.im/post/5b73a50df265da27f7590737
+[8]:https://github.com/vuejs/vue-router/blob/next/examples/scroll-behavior/app.js
