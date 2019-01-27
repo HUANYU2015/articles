@@ -4,17 +4,13 @@
 
 ### 直接下载/CDN
 
-### NPM 
+### NPM
 
 使用下面的命令或是使用vue-cli自动安装
 
 ~~~ xml
 npm install vue-router
 ~~~
-
-$检测测试简答支持合适检测终于简要必须知道输出加载$
-~~检测~~
-
 
 如果在一个模块化工程中使用它，必须要通过Vue.use()明确地安装路由功能：
 
@@ -94,6 +90,7 @@ Vue Router是Vue.js官方的路由管理器。它和Vue.js的核心深度集成�
  ```
 
 你可以在一个路由中设置多段 **路径参数**，对应的值都会设置到 `$route.params` 中。例如：
+
 | 模式                          | 匹配路径            | $route.params                        |
 | :---------------------------- | :------------------ | :----------------------------------- |
 | /user/:username               | /user/evan          | `{username: ‘evan’}`               |
@@ -576,7 +573,7 @@ const router = new VueRouter({
 
 #### 布尔模式
 
-如果 `props` 被设置为 `true` ，`route.params` 将会被设置为组件属性。
+如果`props`被设置为 `true` ，`route.params` 将会被设置为组件属性。
 
 #### 对象模式
 
@@ -638,7 +635,7 @@ const router = new VueRouter({
 
 new Vue({
   router,
-  template: `
+  template: '
     <div id="app">
       <h1>Route props</h1>
       <ul>
@@ -650,7 +647,7 @@ new Vue({
       </ul>
       <router-view class="view" foo="123"></router-view>
     </div>
-  `
+  '
 }).$mount('#app')
 ~~~
 
@@ -708,7 +705,7 @@ window.onhashchange = function(event) {
 
 #### 后端配置例子
 
-// todo 待续！*****待续*****
+// 下面是一些针对未匹配到静态资源后，返回index.html页面的设置。
 
 $nginx$
 
@@ -891,6 +888,52 @@ scrollBehavior (to, from, savedPosition) {
 
 ### 路由懒加载
 
+当打包构建应用时，JavaScript包会变得非常大，从而影响页面的加载速度。如果我们能够把不同的路由对应的组件分割成不同的代码块，然后当路由被访问时采加载对应的组件，这样就变得高效了。
+
+为了满足上面的要求，需要结合Vue的[异步组件][9]和Webpack 的[代码分割功能][10]。
+
+首先，需要将异步组件定义为一个工厂函数，并且该工厂函数返回一个Promise（该函数返回的Promise应是resolve组件本身）：
+
+~~~ javascript
+const Foo = () => Promise.resolve({/*组件定义对象*/})
+~~~
+
+第二，在Webpack2中，我们可以使用[动态 import][11]语法来定义代码分块点（split point）：
+
+~~~ javascript
+import('./Foo.vue')
+~~~
+
+将前面两步相结合，即为如下代码，就定义了一个能够被Webpack自动进行代码分割的异步组件：
+
+~~~ javascript
+const Foo = () => import('./Foo.vue')
+~~~
+
+然后在路由router实例中直接引用 `Foo`，或者直接在router实例中使用 `import` 语法:
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [{
+        path: '/foo',
+        component: () => import('./Foo.vue')
+        }
+    ]
+})
+~~~
+
+#### 按组分块
+
+有时候，我们需要将同个路由下的所有组件装入同一个**异步块**(async chunk)中。为此，我们需要使用[**命名块**][12](named chunks)，命名块通过使用一种特殊的 **`注释语法`** 来提供一个**块名称**(chunk name)(webpack版本需要高于2.4)，具体代码如下：
+
+~~~ javascript
+const Foo = () => import(/* webpackChunkName: "group-foo" */ './Foo.vue')
+const Bar = () => import(/* webpackChunkName: "group-foo" */ './Bar.vue')
+const Baz = () => import(/* webpackChunkName: "group-foo" */ './Baz.vue')
+~~~
+
+这样webpack会将具有同一**块名称**(chunk name)的所有异步模块(组件)装入同一个**异步块**(async chunk)中。
+
 TODO 待续！见[7]
 
 [1]:https://segmentfault.com/a/1190000012578301
@@ -901,3 +944,7 @@ TODO 待续！见[7]
 [6]:http://www.hangge.com/blog/cache/detail_2130.html
 [7]:https://juejin.im/post/5b73a50df265da27f7590737
 [8]:https://github.com/vuejs/vue-router/blob/next/examples/scroll-behavior/app.js
+[9]:https://cn.vuejs.org/v2/guide/components-dynamic-async.html#%E5%BC%82%E6%AD%A5%E7%BB%84%E4%BB%B6
+[10]:https://doc.webpack-china.org/guides/code-splitting-async/#require-ensure-/
+[11]:https://github.com/tc39/proposal-dynamic-import
+[12]:https://webpack.js.org/guides/code-splitting-async/#chunk-names
