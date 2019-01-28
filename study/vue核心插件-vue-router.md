@@ -2,6 +2,8 @@
 
 ## 安装
 
+---
+
 ### 直接下载/CDN
 
 ### NPM
@@ -28,13 +30,15 @@ Vue.use(VueRouter)
 git clone https://github.com/vuejs/vue-router.git node_modules/vue-router
 cd node_modules/vue-router
 npm install
- run build
+run build
 ~~~
 
 ## 介绍
 
->### 版本说明
->对于TypeScript用户来说，**vue-router@3.0+**依赖**vue@2.5+**，反之亦然。
+---
+
+> $版本说明$
+> 对于TypeScript用户来说，**vue-router@3.0+**依赖**vue@2.5+**，反之亦然。
 
 Vue Router是Vue.js官方的路由管理器。它和Vue.js的核心深度集成，让构建单页面应用变得易如反掌。它具有以下功能：
 
@@ -48,6 +52,8 @@ Vue Router是Vue.js官方的路由管理器。它和Vue.js的核心深度集成�
 - **自动的滚动条行为**
 
 ## 基础
+
+---
 
 ### 起步
 
@@ -506,7 +512,7 @@ const router = new VueRouter({
 })
 ~~~
 
-> 注意[导航守卫](#导航守卫)并没有应用在跳转路由上，而仅仅应用在其目标上。在下面这个例子中，为 /a 路由添加一个 beforeEach 或 beforeLeave 守卫并不会有任何效果。
+> 注意[导航守卫](#导航守卫)并没有应用在跳转路由(from)上，而仅仅应用在其目标路由上(to)。在下面这个例子中，为 /a 路由添加一个 beforeEach 或 beforeLeave 守卫并不会有任何效果。
 >
 > 其它高级用法，请参考[**例子**](https://github.com/vuejs/vue-router/blob/dev/examples/redirect/app.js)。
 
@@ -736,11 +742,162 @@ const router = new VueRouter({
 
 ## 进阶
 
+---
+
 ### 导航守卫
 
-TODO 待续！
+> 导航表示路由正在发生改变。
+
+正如其名， `vue-router` 提供的导航守卫主要通过跳转或取消的方式用来守卫导航。并且有多种方式植入导航过程中，比如全局的、单路由独享的、或者组件级的。
+
+注意，参数或查询的改变并不会进入或离开导航守卫。你可以通过观察 `$route` 对象来应对这些变化，或者使用 `beforeRouteUpdate` 组件内守卫。
+
+#### 全局前置守卫
+
+可以使用 `router.beforeEach` 注册全局前置守卫：
+
+~~~ javascript
+const router = new VueRouter({...})
+
+router.beforeEach((to, from, next) => {
+    // ...
+})
+~~~
+
+当一个导航被触发时，全局前置守卫按照其创建顺序被依次调用。导航是异步解析执行的，并且导航在所有守卫(hooks)被解析(resolve)完成前一直处于等待中。
+
+每个守卫函数接收三个参数：
+
+- **`to: Route`** : 将被导航至的目标路由对象。
+- **`from: Route`** : 当前路由对象，将要因导航而离开该路由。
+- **`next: Function`** : 必须要调用该函数来解析这个钩子(hook)，其执行效果依赖于提供给该 `next` 函数的参数：
+  - **`next()`** : 进行传输线路(pipeline)中的下一个钩子(hook)，如果所有钩子都执行完毕，则导航的状态就是确认的(confirmed)；
+  - **`next(false)`** : 中断当前导航。如果浏览器URL被改变了(可能是用户手动操作或点击回退按钮)，那么导航目标(URL地址)重置为 `from` 路由对应的地址;
+  - **`next('/')` 或 `next({path: '/'})`** : 重定向到一个不同的位置。当前导航将被中断，然后开始一个新的导航，你可以向 next 函数传递任意位置对象，</br>且允许设置诸如：`replace: true`，`name: 'home'`之类的选项，以及任意在 `router-link` 组件的 `to` 属性及 `router.push` 方法中使用的选项；
+  - **`next(error)`** : (2.4.0+)如果传入 `next` 函数的参数是 `Error` 的实例，导航将被中止且错误会传递给经由 `router.onError()` 方法注册的回调函数(callbacks)。
+
+**要确保调用 `next` 函数，否则守卫(hook)将不会被解析，可查看[路由元信息](#路由元信息)中的示例**。
+
+#### 全局解析守卫
+
+> 2.5.0新增
+
+你可以用 `router.beforeResolve` 注册一个全局守卫。这和 `router.beforeEach` 类似，区别是在导航被确认之前，**同时在所有组件内守卫和异步路由组件被解析之后**，解析守卫就被调用。
+
+#### 全局后置钩子
+
+你也可以注册全局后置钩子，然而和守卫不同的是，这些钩子不会接受 next 函数，也不会改变导航本身：
+
+~~~ javascript
+router.afterEach((to, from) => {
+    // ...
+})
+~~~
+
+#### 路由独享守卫
+
+你可以直接在路由的配置对象中定义 `beforeEnter` 守卫：
+
+~~~ javascript
+const router = new VueRouter({
+    routers: [
+        {
+            path: './foo',
+            component: Foo,
+            beforeEnter: (to, from, next) => {
+                // ...
+            }
+        }
+    ]
+})
+~~~
+
+这些守卫和全局前置守卫拥有一样的方法签名(signature)，即方法参数。
+
+#### 组件内守卫
+
+你还可以在组件内部直接定义一下路由导航守卫：
+
+- beforeRouterEnter
+- beforeRouterUpdate (2.2新增)
+- beforeRouterLeave
+
+~~~ javascript
+const Foo = {
+    template: '...',
+    beforRouterEnter (to, from, next) {
+        // 在渲染该组件的对应路由被 confirm 前调用
+        // 不能 获取组件实例 'this'
+        // 因为当守卫执行前，组件实例还未被创建
+    },
+    beforeRouterUpdate (to, from, next) {
+        // 在当前路由被改变，但该组件被复用时被调用
+        // 例如，对于一个带有动态参数的路径：/foo/:id，在/foo/1 和 /foo/2 之间跳转的时候
+        // 由于会渲染同样的 Foo 组件，因此组件实例会被复用
+        // 可以访问组件实例 ‘this’
+    },
+    beforeRouterLeave (to, from, next) {
+        // 导航离开该组件的对应路由时调用
+        // 可以访问组件实例 'this'
+    }
+}
+~~~
+
+`beforeRouterEnter` 守卫**不能**访问 `this`，因为守卫在导航确认前被调用，因此即将登场的新组建还未被创建。
+
+不过，你可以通过传一个回调方法给 next 来访问组件实例，在导航被确认的时候执行回调，且组件实例会作为一个参数传递给回调方法：
+
+~~~ javascript
+beforeRouterEnter (to, from, next) {
+    next(vm => {
+        // 通过 ‘vm’ 访问组件实例
+    })
+}
+~~~
+
+> 注意： `beforeRouterEnter` 是支持给 next 传递回调的位移守卫。对于 `beforeRouterUpdate` 和 `beforeRouterLeave` 来说，`this` 已经可用了，所以不支持传递回调，因为没有必要了。
+
+~~~ javascript
+beforeRouterUpdate (to, from, next) {
+    // just use ‘this’
+    this.name = to.params.name,
+    next()
+}
+~~~
+
+这个离开守卫通常用来禁止用户在还未保存修改前突然离开当前页面(URL地址)。该导航可以通过 `next(false)` 来取消。
+
+~~~ javascript
+beforeRouterleave (to, from, next) {
+    const answer = window.confirm('Do you really want to leave? you have unsaved changges!')
+    if (answer) {
+        next()
+    } else {
+        next(false)
+    }
+}
+~~~
+
+#### 完整的导航解析流程
+
+🦋🍎🐸
+
+1. 导航被触发。
+2. 在失活的组件里调用 `beforeRouterLeave` 守卫。
+3. 调用全局的 `beforeEach` 守卫。
+4. 在重用的组件里调用 `beforeRouterUpdate` 守卫(2.2+)
+5. 在路由配置里调用 `beforeEnter` 守卫。
+6. 解析异步路由组件。
+7. 在被激活的组件里调用 `beforeRouterEnter`。
+8. 调用全局的 `beforeResolve` 守卫(2.5+)。
+9. 导航被确认(confirmed)。
+10. 调用全局的 `afterEach` 钩子。
+11. 触发 DOM 更新。
+12. 用创建好的实例调用 `beforeRouterEnter` 守卫中传给 next 的回调函数。
 
 ### 路由元信息
+
+🦋 注意与导航守卫的联系。
 
 vue-router路由元信息简单说，就是通过meta对象中的一些属性设定来判断当前路由是否需要进行相关处理。
 
@@ -822,9 +979,32 @@ $解析：$
 
 ### 过度动效
 
+`<router-view>` 是基本的动态组件，所以我们可以用 `<transition>` 组件给它添加一些过渡效果：
+
+~~~ javascript
+<transition>
+   <router-view></router-view>
+</transition>
+~~~
+
+[Transition 的所有功能][13] 在这里同样适用。
+
+#### 单个路由的过度
+
+#### 基于路由的动态过度
+
 ### 数据获取
 
-TODO 待续！
+有时候，进入某个路由后，需要从服务器获取数据。例如，在渲染用户数据时，你需要从服务器获取用户数据。我们可以通过以下两种方式来实现：
+
+- **导航完成之后获取**：先完成导航，然后在接下来的组件生命周期钩子中获取数据，在数据获取期间显示“加载中”之类的提示。
+- **当行完成之前获取**：导航完成前，在路由进入(to)的守卫中获取数据，在数据获取成功后执行导航。
+
+从技术角度将，两种方式都不错——就看你想要的用户体验是哪种。
+
+#### 导航完成后获取数据
+
+#### 导航完成前获取数据
 
 ### 滚动行为
 
@@ -948,3 +1128,4 @@ TODO 待续！见[7]
 [10]:https://doc.webpack-china.org/guides/code-splitting-async/#require-ensure-/
 [11]:https://github.com/tc39/proposal-dynamic-import
 [12]:https://webpack.js.org/guides/code-splitting-async/#chunk-names
+[13]:https://cn.vuejs.org/guide/transitions.html
