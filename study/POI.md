@@ -53,7 +53,7 @@ public @interface ExcelAnnotation {
 ~~~
 
 > 对于列注释index()，表头cell索引设定所遵循的原则是：索引从*0*开始，依据表头在页面中的展布位置，从左往右，从上往下，从父cell到子cell升序排列，即就是靠左的cell索引小于靠右cell的索引，父cell的索引小于其子cell的索引，靠左的子cell的索引小于靠右的父cell的索引。具体见下表所示:
-![img_1](https://github.com/HUANYU2015/articles/blob/master/image.png)
+![img_1](/assets/image.png)
 
 2. model类
 
