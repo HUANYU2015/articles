@@ -544,7 +544,8 @@ begin
       end loop;
       close cemp;
 
-      -- 保存一条记录到 msg 中，其中 nvl(var, 0)函数的作用是在 var 为空时，将其显示为 0，
+      -- 保存一条记录到 msg 中，其中 
+      (var, 0)函数的作用是在 var 为空时，将其显示为 0，
       insert into msg values(pdeptno, count1, count2, count3, nvl(salTotal, 0));
    end loop;
    close cdept;
@@ -641,3 +642,4 @@ begin
 end;
 /
 ```
+![icons8-qq](/assets/icons8-qq.png)
