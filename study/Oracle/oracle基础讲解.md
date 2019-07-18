@@ -154,3 +154,56 @@ grant 权限列表|角色列表 to 角色名
 5.PUBLIC 为所有的用户
 
 6.ALL：对象权限中的所有对象权限
+
+## 关键 SQL 命令讲解
+
+### inner join、right join 与 inner join
+
+left join(左联接)返回包括左表中的所有记录和右表中联结字段相等的记录
+right join(右联结)返回包括右表中的所有记录和左表中联结字段相等的记录
+inner join(等值连接)只返回两个表中联结字段相等的行
+
+示例如下图;
+
+![Xnip2019-07-15_17-27-56](/assets/Xnip2019-07-15_17-27-56.png)
+
+![Xnip2019-07-15_17-29-08](/assets/Xnip2019-07-15_17-29-08.png)
+
+![Xnip2019-07-15_17-30-16](/assets/Xnip2019-07-15_17-30-16.png)
+
+https://www.cnblogs.com/pcjim/articles/799302.html
+
+### union 与 union all
+
+为了将两个 select 语句的结果作为一个整体显示出来，就需要用到 union 或者 union all 关键字。两者的区别如下：
+
+union: 对两个结果集进行并集操作，会排除多个结果集中的重复行，同时进行默认规则的排序；
+union all: 对两个结果集进行并集操作，包括重复行，不进行排序。
+
+其他，intersect 与 Minus
+
+Intersect: 对两个结果集进行交集操作，会排除多个结果集中的重复行，同时进行默认规则的排序；
+
+Minus: 对两个结构集进行差操作，不包括重复行，同时进行默认规则的排序。
+
+此外，我们没有必要在每一个 select 结果集中使用 order by子句来进行排序，我们可以在最后使用一条order by来对整个结果进行排序。例如：
+
+例如：
+
+``` sql
+select employee_id, job_id from employees
+union
+select employee_id, job_id from job_history
+order by 、、、
+```
+
+> 注意
+>
+> union 和 union all 都可以将多个结果集合并，而不仅仅是两个，你可以将多个结果集串起
+> 来。 使用union和union all必须保证各个select 集合的结果有**`相同个数的列`**，并
+> 且每个`列类型是一样的`。但`列名则不一定需要相同`，oracle会将`第一个`结果的列名作为
+> 结果集的列名。
+
+### with as 、、、select、、、
+
+
