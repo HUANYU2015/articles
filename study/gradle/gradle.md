@@ -31,6 +31,7 @@ ProjectVersion projectVersion1 = null
 println projectVersion == projectVersion1
 
 ```
+/Users/shuyunfeng/.ssh/gitlab_id_rsa    
 
 ``` groovy
 // 1 可选的类型定义
@@ -74,3 +75,18 @@ print(buildYears.getClass())
 
 // 闭包
 ```
+
+
+``` bash
+# GitHub.com
+Host github.com
+  Preferredauthentications publickey
+  IdentityFile ~/.ssh/id_rsa
+
+# GitLab.com
+Host gitlab.com
+  Preferredauthentications publickey
+  IdentityFile ~/.ssh/gitlab_id_rsa
+```
+
+![Xnip2019-07-22_12-23-16](/assets/Xnip2019-07-22_12-23-16.png)
