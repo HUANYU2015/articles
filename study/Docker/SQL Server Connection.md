@@ -95,7 +95,7 @@ sqlcmd -S <ip_address>,1433 -U SA -P '<YourNewStrong!Passw0rd>'
 
 ```bash
 sudo docker stop sql1
-sudo docker rm sql1
+sudo docker    sql1
 ```
 
 > 注意：停止并永久删除容器会删除容器中的所有 SQL Server 数据。 如果你需要保留数据，请在容器外`创建并复制备份文件`或使用`容器数据暂留技术`。
