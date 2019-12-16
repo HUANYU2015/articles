@@ -86,6 +86,10 @@ $10.table(表)$
 
 当某些条件被满足时，MemStore中的数据会被flush到磁盘上进行持久化，最终这些数据以StoreFile的形式存储到HDFS中。
 
+RegionServer -> WAL -> n Region
+Region -> n Store
+Store -> MemStore -> StoreFile
+
 ![Xnip2019-08-30_13-46-33](/assets/Xnip2019-08-30_13-46-33.png)
 
 ## HBASE优点
